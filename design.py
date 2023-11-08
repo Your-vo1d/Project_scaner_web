@@ -29,6 +29,9 @@ class Ui_MainWindow(object):
         self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit.setObjectName("lineEdit")
         self.verticalLayout.addWidget(self.lineEdit)
+        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton.setObjectName("pushButton")
+        self.verticalLayout.addWidget(self.pushButton)
         self.XSS_checkBox = QtWidgets.QCheckBox(self.centralwidget)
         font = QtGui.QFont()
         font.setPointSize(14)
@@ -54,7 +57,7 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(14)
         self.XRF_checkBox.setFont(font)
-        self.XRF_checkBox.setObjectName("XRF_checkBox")
+        self.XRF_checkBox.setObjectName("XRFC_checkBox")
         self.verticalLayout.addWidget(self.XRF_checkBox)
         self.Check_web_pushButton = QtWidgets.QPushButton(self.centralwidget)
         self.Check_web_pushButton.setObjectName("Check_web_pushButton")
@@ -74,6 +77,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         self.Urllabel.setText(_translate("MainWindow", "URL"))
+        self.pushButton.setText(_translate("MainWindow", "Set url"))
         self.XSS_checkBox.setText(_translate("MainWindow", "XSS"))
         self.ARP_checkBox.setText(_translate("MainWindow", "ARP-spoofing"))
         self.SQL_checkBox.setText(_translate("MainWindow", "SQL-injection"))
