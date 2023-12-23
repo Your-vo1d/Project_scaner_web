@@ -6,14 +6,12 @@ import XSS_scaner
 import validators
 import SQL_scaner
 import requests
-from auth_module import AuthModule
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
 class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
     session = requests.session()
     def __init__(self):
-        self.auth_module = AuthModule()
         self.url = 'test.ru'
         self.auth_url = 'test.ru'
         self.correct_url = False
@@ -62,7 +60,7 @@ class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
                 else:
                     result_text += 'XSS уязвимость - отсутствует\n'
             if self.SQL_checkBox.isChecked():
-                if SQL_scaner.scan_sql_injection(self.url):
+                if SQL_scaner.scan_sql_injection(ExampleApp.session, self.url):
                     result_text += 'SQL injection уязвимость - присутствует\n'
                 else:
                     result_text += 'SQL injection уязвимость - отсутствует\n'
@@ -89,11 +87,9 @@ class ExampleApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             text = response.text
 
             if response.ok:
-                # Check if authentication was successful based on the response text
                 print('Enter your credentials' not in text)
                 return 'Enter your credentials' not in text
             else:
-                print(f"Authentication failed with status code: {response.status_code}")
                 return False
         
 def main():
