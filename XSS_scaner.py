@@ -1,85 +1,63 @@
 import requests
-from pprint import pprint
 from bs4 import BeautifulSoup as bs
 from urllib.parse import urljoin
+from pprint import pprint
+from auth_module import AuthModule
 
 # Функция получения всех форм страницы
-def get_all_forms(url):
-    soup = bs(requests.get(url).content, "html.parser") #
+def get_all_forms(session, url):
+    soup = bs(session.get(url).content, "html.parser")
     return soup.find_all("form")
 
-#Функция получения всех деталей форм и атрибутов
+
+# Функция получения всех деталей форм и атрибутов
 def get_form_details(form):
     details = {}
-    # get the form action (target url)
     action = form.attrs.get("action", "").lower()
-    # get the form method (POST, GET, etc.)
     method = form.attrs.get("method", "get").lower()
-    # get all the input details such as type and name
     inputs = []
     for input_tag in form.find_all("input"):
         input_type = input_tag.attrs.get("type", "text")
         input_name = input_tag.attrs.get("name")
         inputs.append({"type": input_type, "name": input_name})
-    # put everything to the resulting dictionary
     details["action"] = action
     details["method"] = method
     details["inputs"] = inputs
     return details
 
-def submit_form(form_details, url, value):
-    """
-    Submits a form given in `form_details`
-    Params:
-        form_details (list): a dictionary that contain form information
-        url (str): the original URL that contain that form
-        value (str): this will be replaced to all text and search inputs
-    Returns the HTTP Response after form submission
-    """
-    # construct the full URL (if the url provided in action is relative)
+
+# Функция для отправки формы
+def submit_form(session, form_details, url, values):
     target_url = urljoin(url, form_details["action"])
-    # get the inputs
     inputs = form_details["inputs"]
     data = {}
     for input in inputs:
-        # replace all text and search values with `value`
-        if input["type"] == "text" or input["type"] == "search":
-            input["value"] = value
         input_name = input.get("name")
-        input_value = input.get("value")
-        if input_name and input_value:
-            # if input name and value are not None, 
-            # then add them to the data of form submission
-            data[input_name] = input_value
-
-    print(f"[+] Submitting malicious payload to {target_url}")
-    print(f"[+] Data: {data}")
+        input_value = values.get(input_name, "")
+        data[input_name] = input_value
     if form_details["method"] == "post":
-        return requests.post(target_url, data=data)
+        return session.post(target_url, data=data)
     else:
-        # GET request
-        return requests.get(target_url, params=data)
+        return session.get(target_url, params=data)
 
-def scan_xss(url):
-    """
-    Given a `url`, it prints all XSS vulnerable forms and 
-    returns True if any is vulnerable, False otherwise
-    """
-    # get all the forms from the URL
-    forms = get_all_forms(url)
-    print(f"[+] Detected {len(forms)} forms on {url}.")
-    js_script = "<Script>alert('hi')</scripT>"
-    # returning value
+def scan_xss(session, url):
+    # Продолжение сканирования на уязвимость XSS после успешной аутентификации
+    forms = get_all_forms(session, url)
+    js_script = "<script>alert('hi')</script>"
     is_vulnerable = False
-    # iterate over all forms
+
     for form in forms:
         form_details = get_form_details(form)
-        content = submit_form(form_details, url, js_script).content.decode()
+
+        # Создаем словарь значений для всех полей ввода
+        form_values = {}
+        for input in form_details["inputs"]:
+            if input["type"] == "text" or input["type"] == "search":
+                form_values[input["name"]] = js_script
+
+        content = submit_form(session, form_details, url, form_values).content.decode()
         if js_script in content:
             is_vulnerable = True
             break
-    return is_vulnerable
 
-if __name__ == "__main__":
-    url = "https://xss-game.appspot.com/level1/frame"
-    print(scan_xss(url))
+    return is_vulnerable
